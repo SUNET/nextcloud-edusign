@@ -1,0 +1,6 @@
+{
+    "require": {
+        "psr/log": "^3.0",
+        "guzzlehttp/guzzle": "^7.9"
+    }
+}
