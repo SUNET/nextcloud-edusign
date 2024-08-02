@@ -15,6 +15,7 @@ use OCP\Files\NotPermittedException;
 use OCP\IAppConfig;
 use OCP\IRequest;
 use OCP\IURLGenerator;
+use OCP\IUserManager;
 use Psr\Log\LoggerInterface;
 
 class ApiController extends Controller
@@ -26,6 +27,7 @@ class ApiController extends Controller
   private IURLGenerator $urlGenerator;
   private string $edusignEndpoint;
   private IAppConfig $config;
+  private IUserManager $userManager;
 
   private function generate_uuid()
   {
@@ -48,6 +50,26 @@ class ApiController extends Controller
     $this->config->setValueString($this->appName, $key, $value);
   }
 
+  private function getPersonalData(string $uid, string $return_url): array
+  {
+    $user = $this->userManager->get($uid);
+    $display_name = $user->getDisplayName($uid);
+    $mail = $user->getEMailAddress();
+    $personal_data = array(
+      "idp" => "https://login.idp.eduid.se/idp.xml",
+      "eppn" => "kugil-nuzuk@eduid.se",
+      "display_name" => $display_name,
+      "mail" => [$mail],
+      "authn_context" => "https://refeds.org/profile/mfa",
+      "organization" => "eduID Sweden",
+      "assurance" => array("http://www.swamid.se/policy/assurance/al1"),
+      "registration_authority" => "http://www.swamid.se/",
+      "saml_attr_schema" => "20",
+      "return_url" => $return_url
+    );
+    return $personal_data;
+  }
+
 
   public function __construct(
     ?string $userId,
@@ -57,7 +79,7 @@ class ApiController extends Controller
     IRootFolder $rootFolder,
     IURLGenerator $urlGenerator,
     IAppConfig $config,
-
+    IUserManager $userManager,
   ) {
     parent::__construct($appName, $request);
     $this->appName = $appName;
@@ -68,6 +90,7 @@ class ApiController extends Controller
     $this->rootFolder = $rootFolder;
     $this->urlGenerator = $urlGenerator;
     $this->userId = $userId;
+    $this->userManager = $userManager;
   }
   /**
    * @NoCSRFRequired
@@ -115,23 +138,11 @@ class ApiController extends Controller
     $uuid = $this->generate_uuid();
     $this->setAppValue('eduid-path-' . $uuid, $path);
     $this->setAppValue('eduid-redirect-uri-' . $uuid, $redirect_uri);
-    $this->setAppValue('eduid-uid-' . $uuid, $this->userId);
     $b64pdf = base64_encode($contents);
 
     $signreq = array(
       "api_key" => "dummy",
-      "personal_data" => array(
-        "idp" => "https://login.idp.eduid.se/idp.xml",
-        "eppn" => "kugil-nuzuk@eduid.se",
-        "display_name" => "Karl Mikael Svante Nordin",
-        "mail" => ["mik@elnord.in"],
-        "authn_context" => "https://refeds.org/profile/mfa",
-        "organization" => "eduID Sweden",
-        "assurance" => array("http://www.swamid.se/policy/assurance/al1"),
-        "registration_authority" => "http://www.swamid.se/",
-        "saml_attr_schema" => "20",
-        "return_url" => $return_url
-      ),
+      "personal_data" => $this->getPersonalData($this->userId, $return_url),
       "payload" => array(
         "documents" => array(
           "invited" => array(),
@@ -159,7 +170,26 @@ class ApiController extends Controller
       return new JSONResponse(json_encode($error_response));
     }
 
-    return new JSONResponse($response->getBody()->getContents());
+    $body = $response->getBody();
+    $string_body = "";
+    if ($body) {
+      $string_body = $body->getContents();
+      $array_body = json_decode($string_body);
+      $payload = $array_body->payload;
+      if (!$array_body->error) {
+        $this->setAppValue('eduid-uid-' . $payload->relay_state, $this->userId);
+      } else {
+        $this->logger->error($array_body->message);
+        $error_response["message"] = $array_body->message;
+        return new JSONResponse(json_encode($error_response));
+      }
+    } else {
+      $this->logger->error("No response body");
+      $error_response["message"] = "No response body";
+      return new JSONResponse(json_encode($error_response));
+    }
+
+    return new JSONResponse($string_body);
   }
   /**
    * @NoCSRFRequired
@@ -174,21 +204,10 @@ class ApiController extends Controller
     $sign_response = $params['EidSignResponse'];
     $redirect_uri = $this->urlGenerator->getBaseUrl();
     $return_url = $this->urlGenerator->getAbsoluteURL("/index.php/apps/edusign/response");
-
+    $uid = $this->getAppValue('eduid-uid-' . $relay_state);
     $docreq = array(
       "api_key" => "dummy",
-      "personal_data" => array(
-        "idp" => "https://login.idp.eduid.se/idp.xml",
-        "eppn" => "kugil-nuzuk@eduid.se",
-        "display_name" => "Karl Mikael Svante Nordin",
-        "mail" => ["mik@elnord.in"],
-        "authn_context" => "https://refeds.org/profile/mfa",
-        "organization" => "eduID Sweden",
-        "assurance" => array("http://www.swamid.se/policy/assurance/al1"),
-        "registration_authority" => "http://www.swamid.se/",
-        "saml_attr_schema" => "20",
-        "return_url" => $return_url
-      ),
+      "personal_data" => $this->getPersonalData($uid, $return_url),
       "payload" => array(
         "sign_response" => $sign_response,
         "relay_state" => $relay_state
@@ -214,7 +233,6 @@ class ApiController extends Controller
           $filenamebase = $info['filename'] . "-signed";
           $filename = $filenamebase . "." . $info['extension'];
           $filecontent = base64_decode((string)$document->signed_content);
-          $uid = $this->getAppValue('eduid-uid-' . $uuid);
           $userFolder = $this->rootFolder->getUserFolder($uid);
           $index = 1;
           while ($userFolder->nodeExists($filename)) {
@@ -231,7 +249,7 @@ class ApiController extends Controller
 
           $this->deleteAppValue('eduid-redirect-uri-' . $uuid);
           $this->deleteAppValue('eduid-path-' . $uuid);
-          $this->deleteAppValue('eduid-uid-' . $uuid);
+          $this->deleteAppValue('eduid-uid-' . $relay_state);
         }
       }
     } catch (RequestException $e) {
