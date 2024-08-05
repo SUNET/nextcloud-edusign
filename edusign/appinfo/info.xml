@@ -21,4 +21,8 @@
   <dependencies>
     <nextcloud min-version="28" max-version="29" />
   </dependencies>
+  <settings>
+    <admin>OCA\Edusign\Settings\AdminSettings</admin>
+    <admin-section>OCA\Edusign\Settings\AdminSection</admin-section>
+  </settings>
 </info>

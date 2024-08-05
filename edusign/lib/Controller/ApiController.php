@@ -6,6 +6,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\RedirectResponse;
 use OCP\Files\File;
@@ -28,6 +29,28 @@ class ApiController extends Controller
   private string $edusignEndpoint;
   private IAppConfig $config;
   private IUserManager $userManager;
+
+  public function __construct(
+    ?string $userId,
+    string $appName,
+    IRequest $request,
+    LoggerInterface $logger,
+    IRootFolder $rootFolder,
+    IURLGenerator $urlGenerator,
+    IAppConfig $config,
+    IUserManager $userManager,
+  ) {
+    parent::__construct($appName, $request);
+    $this->appName = $appName;
+    $this->client = new Client();
+    $this->config = $config;
+    $this->edusignEndpoint =  "https://dev.edusign.sunet.se/api/v1";
+    $this->logger = $logger;
+    $this->rootFolder = $rootFolder;
+    $this->urlGenerator = $urlGenerator;
+    $this->userId = $userId;
+    $this->userManager = $userManager;
+  }
 
   private function generate_uuid()
   {
@@ -55,42 +78,71 @@ class ApiController extends Controller
     $user = $this->userManager->get($uid);
     $display_name = $user->getDisplayName($uid);
     $mail = $user->getEMailAddress();
-    $personal_data = array(
-      "idp" => "https://login.idp.eduid.se/idp.xml",
-      "eppn" => "kugil-nuzuk@eduid.se",
-      "display_name" => $display_name,
-      "mail" => [$mail],
-      "authn_context" => "https://refeds.org/profile/mfa",
-      "organization" => "eduID Sweden",
-      "assurance" => array("http://www.swamid.se/policy/assurance/al1"),
-      "registration_authority" => "http://www.swamid.se/",
-      "saml_attr_schema" => "20",
-      "return_url" => $return_url
-    );
+    $personal_data = (array) $this->query()->getData();
+    $personal_data["eppn"] = $uid;
+    $personal_data["display_name"] = $display_name;
+    $personal_data["mail"] = array($mail);
+    $personal_data["return_url"] = $return_url;
+
     return $personal_data;
   }
 
 
-  public function __construct(
-    ?string $userId,
-    string $appName,
-    IRequest $request,
-    LoggerInterface $logger,
-    IRootFolder $rootFolder,
-    IURLGenerator $urlGenerator,
-    IAppConfig $config,
-    IUserManager $userManager,
-  ) {
-    parent::__construct($appName, $request);
-    $this->appName = $appName;
-    $this->client = new Client();
-    $this->config = $config;
-    $this->edusignEndpoint =  "https://dev.edusign.sunet.se/api/v1";
-    $this->logger = $logger;
-    $this->rootFolder = $rootFolder;
-    $this->urlGenerator = $urlGenerator;
-    $this->userId = $userId;
-    $this->userManager = $userManager;
+  /**
+   * @NoCSRFRequired
+   *
+   * @return DataResponse
+   **/
+  public function query(): DataResponse
+  {
+    $response = array(
+      "idp" => $this->getAppValue("idp"),
+      "authn_context" => $this->getAppValue("authn_context"),
+      "organization" => $this->getAppValue("organization"),
+      "assurance" => array($this->getAppValue("assurance")),
+      "registration_authority" => $this->getAppValue("registration_authority"),
+      "saml_attr_schema" => $this->getAppValue("saml_attr_schema"),
+    );
+    return new DataResponse($response);
+  }
+  /**
+   * @NoCSRFRequired
+   *
+   * @return DataResponse
+   **/
+  public function register(): DataResponse
+  {
+    $params = $this->request->getParams();
+    $idp = $params['idp'];
+    $authn_context = $params['authn_context'];
+    $organization = $params['organization'];
+    $assurance = $params['assurance'];
+    $registration_authority = $params['registration_authority'];
+    $saml_attr_schema = $params['saml_attr_schema'];
+    $this->setAppValue("idp", $idp);
+    $this->setAppValue("authn_context", $authn_context);
+    $this->setAppValue("organization", $organization);
+    $this->setAppValue("assurance", $assurance);
+    $this->setAppValue("registration_authority", $registration_authority);
+    $this->setAppValue("saml_attr_schema", $saml_attr_schema);
+    $response = array("status" => "success");
+    return new DataResponse($response);
+  }
+  /**
+   * @NoCSRFRequired
+   *
+   * @return DataResponse
+   **/
+  public function remove(): DataResponse
+  {
+    $this->deleteAppValue("idp");
+    $this->deleteAppValue("authn_context");
+    $this->deleteAppValue("organization");
+    $this->deleteAppValue("assurance");
+    $this->deleteAppValue("registration_authority");
+    $this->deleteAppValue("saml_attr_schema");
+    $response = array("success" => "success");
+    return new DataResponse($response);
   }
   /**
    * @NoCSRFRequired
@@ -222,8 +274,8 @@ class ApiController extends Controller
       if ($body) {
         $string_body = $body->getContents();
         $array_body = json_decode($string_body);
-        $payload = $array_body->payload;
         if (!$array_body->error) {
+          $payload = $array_body->payload;
           // We only have one document in the response, so we can get it directly
           $document = $payload->documents[0];
           $uuid = $document->id;
@@ -251,6 +303,8 @@ class ApiController extends Controller
           $this->deleteAppValue('eduid-path-' . $uuid);
           $this->deleteAppValue('eduid-uid-' . $relay_state);
         }
+      } else {
+        $this->logger->error("Error: {$response->getStatusCode()}");
       }
     } catch (RequestException $e) {
       $this->logger->error($e->getMessage());

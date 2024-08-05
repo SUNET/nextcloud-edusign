@@ -75,6 +75,7 @@ docker: selfsignedcert docker_kill package
 	docker exec -u www-data nextcloud /bin/bash -c "/var/www/html/occ app:enable $(app_name)"
 	docker exec -u www-data nextcloud /bin/bash -c "/var/www/html/occ app:disable firstrunwizard"
 	docker exec -u www-data nextcloud /bin/bash -c "/var/www/html/occ log:manage --level 0"
+
 	firefox -new-tab https://127.0.0.1:8443/
 
 sign: package docker_kill
