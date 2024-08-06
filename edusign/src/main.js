@@ -40,7 +40,7 @@ const requestSignatureAction = new FileAction({
   },
   enabled(nodes, view) {
     if (!OCA.Edusign.configured) {
-      const url = generateUrl('/index.php/apps/edusign/query');
+      const url = generateUrl('/apps/edusign/query');
       axios.get(url).then(result => {
         OCA.Edusign.configured = 
           result.data.assurance != ""
@@ -62,7 +62,7 @@ const requestSignatureAction = new FileAction({
       && OCA.Edusign.configured;
   },
   async exec(node) {
-    const url = generateUrl("/index.php/apps/edusign/request")
+    const url = generateUrl("/apps/edusign/request")
 
     let request_data = await axios.get(url, { "params": { "path": node.path, "redirect_uri": window.location } });
     if (!request_data.error) {

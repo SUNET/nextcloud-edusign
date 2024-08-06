@@ -107,7 +107,7 @@ export default {
     }
   },
   mounted() {
-    const url = generateUrl('/index.php/apps/edusign/query');
+    const url = generateUrl('/apps/edusign/query');
     axios.get(url).then((result) => {
       this.idp = result.data.idp || "";
       this.authn_context = result.data.authn_context || "";
@@ -137,7 +137,7 @@ export default {
       }
     },
     async remove() {
-      const url = generateUrl('/index.php/apps/edusign/remove');
+      const url = generateUrl('/apps/edusign/remove');
       let res = await axios.get(url);
       console.log(res);
       if (res.data.status == "success") {
@@ -151,7 +151,7 @@ export default {
       }
     },
     async register() {
-      const url = generateUrl('/index.php/apps/edusign/register');
+      const url = generateUrl('/apps/edusign/register');
       var payload = {
         'idp': this.idp,
         'authn_context': this.authn_context,
