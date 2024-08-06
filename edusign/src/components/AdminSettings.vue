@@ -4,8 +4,12 @@
       <NcSettingsSection name="eduSign" description="eduSign signature engine."
         doc-url="https://github.com/SUNET/nextcloud-edusign" @default="populate">
         <div class="external-label">
-          <label for="IDP">IDP</label>
-          <NcTextField id="IDP" :value.sync="idp" :label-outside="true" placeholder="IDP" @update:value="check" />
+          <label for="EdusignEndpoint">eduSign Endpoint</label>
+          <NcTextField id="EdusignEndpoint" :value.sync="edusign_endpoint" :label-outside="true" placeholder="eduSign Endpoint" @update:value="check" />
+        </div>
+        <div class="external-label">
+          <label for="IdP">IdP</label>
+          <NcTextField id="IdP" :value.sync="idp" :label-outside="true" placeholder="IdP (entity id)" @update:value="check" />
         </div>
         <div class="external-label">
           <label for="AuthnContext">Authn Context</label>
@@ -95,6 +99,7 @@ export default {
     return {
       idp: "",
       authn_context: "",
+      edusign_endpoint: "",
       organization: "",
       assurance: "",
       registration_authority: "",
@@ -106,6 +111,7 @@ export default {
     axios.get(url).then((result) => {
       this.idp = result.data.idp || "";
       this.authn_context = result.data.authn_context || "";
+      this.edusign_endpoint = result.data.edusign_endpoint || "";
       this.organization = result.data.organization || "";
       this.assurance = result.data.assurance[0] || "";
       this.registration_authority = result.data.registration_authority || "";
@@ -119,6 +125,7 @@ export default {
       if (
         this.idp != "" &&
         this.authn_context != "" &&
+        this.edusign_endpoint != "" &&
         this.organization != "" &&
         this.assurance != "" &&
         this.registration_authority != "" &&
@@ -136,6 +143,7 @@ export default {
       if (res.data.status == "success") {
         this.idp = "";
         this.authn_context = "";
+        this.edusign_endpoint = "";
         this.organization = "";
         this.assurance = "";
         this.registration_authority = "";
@@ -147,6 +155,7 @@ export default {
       var payload = {
         'idp': this.idp,
         'authn_context': this.authn_context,
+        'edusign_endpoint': this.edusign_endpoint,
         'organization': this.organization,
         'assurance': this.assurance,
         'registration_authority': this.registration_authority,

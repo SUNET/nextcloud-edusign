@@ -42,10 +42,12 @@ const requestSignatureAction = new FileAction({
     if (!OCA.Edusign.configured) {
       const url = generateUrl('/index.php/apps/edusign/query');
       axios.get(url).then(result => {
-        OCA.Edusign.configured = result.data.idp != ""
+        OCA.Edusign.configured = 
+          result.data.assurance != ""
           && result.data.authn_context != ""
+          && result.data.edusign_endpoint != ""
+          && result.data.idp != ""
           && result.data.organization != ""
-          && result.data.assurance != ""
           && result.data.registration_authority != ""
           && result.data.saml_attr_schema != "";
       });

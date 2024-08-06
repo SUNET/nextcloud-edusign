@@ -26,7 +26,6 @@ class ApiController extends Controller
   private LoggerInterface $logger;
   private IRootFolder $rootFolder;
   private IURLGenerator $urlGenerator;
-  private string $edusignEndpoint;
   private IAppConfig $config;
   private IUserManager $userManager;
 
@@ -44,7 +43,6 @@ class ApiController extends Controller
     $this->appName = $appName;
     $this->client = new Client();
     $this->config = $config;
-    $this->edusignEndpoint =  "https://dev.edusign.sunet.se/api/v1";
     $this->logger = $logger;
     $this->rootFolder = $rootFolder;
     $this->urlGenerator = $urlGenerator;
@@ -79,6 +77,7 @@ class ApiController extends Controller
     $display_name = $user->getDisplayName($uid);
     $mail = $user->getEMailAddress();
     $personal_data = (array) $this->query()->getData();
+    unset($personal_data["edusign_endpoint"]);
     $personal_data["eppn"] = $uid;
     $personal_data["display_name"] = $display_name;
     $personal_data["mail"] = array($mail);
@@ -90,16 +89,18 @@ class ApiController extends Controller
 
   /**
    * @NoCSRFRequired
+   * @NoAdminRequired
    *
    * @return DataResponse
    **/
   public function query(): DataResponse
   {
     $response = array(
-      "idp" => $this->getAppValue("idp"),
-      "authn_context" => $this->getAppValue("authn_context"),
-      "organization" => $this->getAppValue("organization"),
       "assurance" => array($this->getAppValue("assurance")),
+      "authn_context" => $this->getAppValue("authn_context"),
+      "edusign_endpoint" => $this->getAppValue('edusign_endpoint'),
+      "idp" => $this->getAppValue("idp"),
+      "organization" => $this->getAppValue("organization"),
       "registration_authority" => $this->getAppValue("registration_authority"),
       "saml_attr_schema" => $this->getAppValue("saml_attr_schema"),
     );
@@ -113,18 +114,21 @@ class ApiController extends Controller
   public function register(): DataResponse
   {
     $params = $this->request->getParams();
-    $idp = $params['idp'];
-    $authn_context = $params['authn_context'];
-    $organization = $params['organization'];
     $assurance = $params['assurance'];
+    $authn_context = $params['authn_context'];
+    $edusign_endpoint = $params['edusign_endpoint'];
+    $idp = $params['idp'];
+    $organization = $params['organization'];
     $registration_authority = $params['registration_authority'];
     $saml_attr_schema = $params['saml_attr_schema'];
-    $this->setAppValue("idp", $idp);
-    $this->setAppValue("authn_context", $authn_context);
-    $this->setAppValue("organization", $organization);
     $this->setAppValue("assurance", $assurance);
+    $this->setAppValue("authn_context", $authn_context);
+    $this->setAppValue("edusign_endpoint", $edusign_endpoint);
+    $this->setAppValue("idp", $idp);
+    $this->setAppValue("organization", $organization);
     $this->setAppValue("registration_authority", $registration_authority);
     $this->setAppValue("saml_attr_schema", $saml_attr_schema);
+
     $response = array("status" => "success");
     return new DataResponse($response);
   }
@@ -137,6 +141,7 @@ class ApiController extends Controller
   {
     $this->deleteAppValue("idp");
     $this->deleteAppValue("authn_context");
+    $this->deleteAppValue("edusign_endpoint");
     $this->deleteAppValue("organization");
     $this->deleteAppValue("assurance");
     $this->deleteAppValue("registration_authority");
@@ -186,7 +191,7 @@ class ApiController extends Controller
       return new JSONResponse(json_encode($error_response));
     }
 
-    $edusign_endpoint = $this->edusignEndpoint . "/create-sign-request";
+    $edusign_endpoint = $this->getAppValue('edusign_endpoint') . "/create-sign-request";
     $uuid = $this->generate_uuid();
     $this->setAppValue('eduid-path-' . $uuid, $path);
     $this->setAppValue('eduid-redirect-uri-' . $uuid, $redirect_uri);
@@ -250,7 +255,7 @@ class ApiController extends Controller
    **/
   public function response(): RedirectResponse
   {
-    $edusign_endpoint = $this->edusignEndpoint . "/get-signed";
+    $edusign_endpoint = $this->getAppValue('edusign_endpoint') . "/get-signed";
     $params = $this->request->getParams();
     $relay_state = $params['RelayState'];
     $sign_response = $params['EidSignResponse'];
