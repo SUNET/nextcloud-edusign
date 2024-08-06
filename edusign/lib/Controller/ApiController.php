@@ -159,7 +159,7 @@ class ApiController extends Controller
     $params = $this->request->getParams();
     $path = $params['path'];
     $redirect_uri = $params['redirect_uri'];
-    $return_url = $this->urlGenerator->getAbsoluteURL("/apps/edusign/response");
+    $return_url = $this->urlGenerator->getAbsoluteURL("/index.php/apps/edusign/response");
     $error_response = array("error" => true);
     if (!$this->userId) {
       $error_response["message"] = "No user logged in";
@@ -260,7 +260,7 @@ class ApiController extends Controller
     $relay_state = $params['RelayState'];
     $sign_response = $params['EidSignResponse'];
     $redirect_uri = $this->urlGenerator->getBaseUrl();
-    $return_url = $this->urlGenerator->getAbsoluteURL("/apps/edusign/response");
+    $return_url = $this->urlGenerator->getAbsoluteURL("/index.php/apps/edusign/response");
     $uid = $this->getAppValue('eduid-uid-' . $relay_state);
     $docreq = array(
       "api_key" => "dummy",
