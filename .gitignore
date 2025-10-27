@@ -1,4 +1,4 @@
-edusign/build
-edusign/js
-edusign/node_modules
-edusign/vendor
+build
+js
+node_modules
+vendor
