@@ -78,18 +78,19 @@ class ApiController extends Controller
     $mail = $user->getEMailAddress();
     $personal_data = (array) $this->query()->getData();
     unset($personal_data["edusign_endpoint"]);
-    $personal_data["eppn"] = $uid;
     $personal_data["display_name"] = $display_name;
     $personal_data["mail"] = array($mail);
     $personal_data["return_url"] = $return_url;
+    $personal_data["authn_attr_name"] = "urn:oid:1.3.6.1.4.1.5923.1.1.1.6";
+    $personal_data["authn_attr_value"] = $uid;
 
     return $personal_data;
   }
 
 
   /**
-   * @NoCSRFRequired
-   * @NoAdminRequired
+   * #[NoCSRFRequired]
+   * #[NoAdminRequired]
    *
    * @return DataResponse
    **/
@@ -107,7 +108,7 @@ class ApiController extends Controller
     return new DataResponse($response);
   }
   /**
-   * @NoCSRFRequired
+   * #[NoCSRFRequired]
    *
    * @return DataResponse
    **/
@@ -133,7 +134,7 @@ class ApiController extends Controller
     return new DataResponse($response);
   }
   /**
-   * @NoCSRFRequired
+   * #[NoCSRFRequired]
    *
    * @return DataResponse
    **/
@@ -150,8 +151,8 @@ class ApiController extends Controller
     return new DataResponse($response);
   }
   /**
-   * @NoCSRFRequired
-   * @NoAdminRequired
+   * #[NoCSRFRequired]
+   * #[NoAdminRequired]
    * @return JSONResponse
    **/
   public function request(): JSONResponse
@@ -231,9 +232,10 @@ class ApiController extends Controller
     $string_body = "";
     if ($body) {
       $string_body = $body->getContents();
+      $this->logger->debug("Response body: " . $string_body);
       $array_body = json_decode($string_body);
-      $payload = $array_body->payload;
       if (!$array_body->error) {
+        $payload = $array_body->payload;
         $this->setAppValue('eduid-uid-' . $payload->relay_state, $this->userId);
       } else {
         $this->logger->error($array_body->message);
@@ -249,8 +251,8 @@ class ApiController extends Controller
     return new JSONResponse($string_body);
   }
   /**
-   * @NoCSRFRequired
-   * @PublicPage
+   * #[NoCSRFRequired]
+   * #[PublicPage]
    * @return RedirectResponse
    **/
   public function response(): RedirectResponse
