@@ -58,11 +58,14 @@ const requestSignatureAction = new FileAction({
     const node = Array.isArray(arg) ? arg[0] : arg
     const url = generateUrl('/apps/edusign/request')
 
-    const { data } = await axios.get(url, {
+    const response = await axios.get(url, {
       params: { path: node.path, redirect_uri: window.location.href },
     })
 
+    const data = response.data
+
     const payload = data?.payload
+
     if (payload) {
       const formData = {
         Binding: payload.binding,

@@ -240,15 +240,15 @@ class ApiController extends Controller
       } else {
         $this->logger->error($array_body->message);
         $error_response["message"] = $array_body->message;
-        return new JSONResponse(json_encode($error_response));
+        return new JSONResponse($error_response);
       }
     } else {
       $this->logger->error("No response body");
       $error_response["message"] = "No response body";
-      return new JSONResponse(json_encode($error_response));
+      return new JSONResponse($error_response);
     }
 
-    return new JSONResponse($string_body);
+    return new JSONResponse($array_body);
   }
   /**
    * #[NoCSRFRequired]

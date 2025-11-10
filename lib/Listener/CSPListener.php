@@ -30,11 +30,15 @@ class CSPListener implements IEventListener
             return;
         }
         $csp = new ContentSecurityPolicy();
-        $idp = $this->appConfig->getAppValue('edusign', 'idp', '');
-        $endpoint = $this->appConfig->getAppValue('edusign', 'edusign_endpoint', '');
+        $idp = $this->appConfig->getAppValue('idp', '');
+        $endpoint = $this->appConfig->getAppValue('edusign_endpoint', '');
         $sites = [$idp, $endpoint, 'https://signservice.test.edusign.sunet.se', 'https://signservice.edusign.sunet.se'];
         foreach ($sites as $site) {
             $url = parse_url($site);
+            if ($url === false || !isset($url["scheme"]) || !isset($url["host"])) {
+                $this->logger->warning('Invalid URL in CSP configuration: ' . $site, ['app' => 'edusign']);
+                continue;
+            }
             $http = $url["scheme"] . "://" . $url["host"];
             $csp->addAllowedFormActionDomain($http);
             $csp->addAllowedConnectDomain($http);
