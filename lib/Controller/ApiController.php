@@ -267,9 +267,13 @@ class ApiController extends Controller
         $redirect_uri = $this->urlGenerator->getBaseUrl();
         $return_url = $this->urlGenerator->getAbsoluteURL("/index.php/apps/edusign/response");
         $uid = $this->getAppValue('eduid-uid-' . $relay_state);
+        $personal_data = $this->getPersonalData($uid, $return_url);
+        unset($personal_data["authn_context"]);
+        unset($personal_data["idp"]);
+        unset($personal_data["return_url"]);
         $docreq = array(
           "api_key" => "dummy",
-          "personal_data" => $this->getPersonalData($uid, $return_url),
+          "personal_data" => $personal_data,
           "payload" => array(
             "sign_response" => $sign_response,
             "relay_state" => $relay_state
