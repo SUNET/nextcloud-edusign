@@ -11,7 +11,7 @@
   <description>
     <![CDATA[Edusign integration for Nextcloud]]>
   </description>
-  <version>0.0.5</version>
+  <version>0.0.6</version>
   <licence>agpl</licence>
   <author mail="kano@sunet.se" homepage="https://github.com/SUNET/nextcloud-edusign">Mikael
     Nordin</author>
