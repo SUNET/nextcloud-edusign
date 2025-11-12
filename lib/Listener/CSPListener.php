@@ -31,8 +31,12 @@ class CSPListener implements IEventListener
         }
         $csp = new ContentSecurityPolicy();
         $idp = $this->appConfig->getAppValue('idp', '');
+        $csp_domains = $this->appConfig->getAppValue('csp_domains', '');
         $endpoint = $this->appConfig->getAppValue('edusign_endpoint', '');
-        $sites = [$idp, $endpoint, 'https://signservice.test.edusign.sunet.se', 'https://signservice.edusign.sunet.se'];
+        $domains = explode(' ', $csp_domains);
+
+        $sites = array_merge($domains, [$idp, $endpoint, 'https://signservice.test.edusign.sunet.se', 'https://signservice.edusign.sunet.se']);
+        $this->logger->debug('CSP Domains: ' . json_encode($sites), ['app' => 'edusign']);
         foreach ($sites as $site) {
             $url = parse_url($site);
             if ($url === false || !isset($url["scheme"]) || !isset($url["host"])) {

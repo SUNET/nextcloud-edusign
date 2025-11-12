@@ -81,6 +81,7 @@ class ApiController extends Controller
         $mail = $user->getEMailAddress();
         $personal_data = (array) $this->query()->getData();
         unset($personal_data["edusign_endpoint"]);
+        unset($personal_data["csp_domains"]);
         $personal_data["display_name"] = $display_name;
         $personal_data["mail"] = array($mail);
         $personal_data["return_url"] = $return_url;
@@ -107,6 +108,7 @@ class ApiController extends Controller
           "organization" => $this->getAppValue("organization"),
           "registration_authority" => $this->getAppValue("registration_authority"),
           "saml_attr_schema" => $this->getAppValue("saml_attr_schema"),
+          "csp_domains" => $this->getAppValue("csp_domains"),
         );
         return new DataResponse($response);
     }
@@ -125,6 +127,7 @@ class ApiController extends Controller
         $organization = $params['organization'];
         $registration_authority = $params['registration_authority'];
         $saml_attr_schema = $params['saml_attr_schema'];
+        $csp_domains = $params['csp_domains'];
         $this->setAppValue("assurance", $assurance);
         $this->setAppValue("authn_context", $authn_context);
         $this->setAppValue("edusign_endpoint", $edusign_endpoint);
@@ -132,6 +135,7 @@ class ApiController extends Controller
         $this->setAppValue("organization", $organization);
         $this->setAppValue("registration_authority", $registration_authority);
         $this->setAppValue("saml_attr_schema", $saml_attr_schema);
+        $this->setAppValue("csp_domains", $csp_domains);
 
         $response = array("status" => "success");
         return new DataResponse($response);
@@ -150,6 +154,7 @@ class ApiController extends Controller
         $this->deleteAppValue("assurance");
         $this->deleteAppValue("registration_authority");
         $this->deleteAppValue("saml_attr_schema");
+        $this->deleteAppValue("csp_domains");
         $response = array("success" => "success");
         return new DataResponse($response);
     }

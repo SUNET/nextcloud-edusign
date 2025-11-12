@@ -69,6 +69,15 @@
 						placeholder="Saml Attribute Schema"
 						@update:model-value="check" />
 				</div>
+				<div class="external-label">
+					<label for="CSPDomains">Additional CSP Domains</label>
+					<NcTextField
+						id="CSPDomains"
+						v-model="csp_domains"
+						:label-outside="true"
+						placeholder="Space separated list of domains"
+						@update:model-value="check" />
+				</div>
 				<NcButton
 					id="Button"
 					:disabled="!isValid"
@@ -148,6 +157,7 @@ export default {
       assurance: '',
       registration_authority: '',
       saml_attr_schema: '',
+      csp_domains: '',
       configured: [],
     }
   },
@@ -162,6 +172,7 @@ export default {
       this.assurance = result.data.assurance[0] || ''
       this.registration_authority = result.data.registration_authority || ''
       this.saml_attr_schema = result.data.saml_attr_schema || ''
+      this.csp_domains = result.data.csp_domains || ''
       this.check()
     }).catch((error) => { console.error(error) })
   },
@@ -191,6 +202,7 @@ export default {
         this.assurance = ''
         this.registration_authority = ''
         this.saml_attr_schema = ''
+        this.csp_domains = ''
       }
     },
 
@@ -204,6 +216,7 @@ export default {
         assurance: this.assurance,
         registration_authority: this.registration_authority,
         saml_attr_schema: this.saml_attr_schema,
+        csp_domains: this.csp_domains,
       }
       const res = await axios.post(url, payload)
       if (res.data.status != 'success') {
