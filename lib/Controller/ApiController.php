@@ -299,20 +299,30 @@ class ApiController extends Controller
                     $document = $payload->documents[0];
                     $uuid = $document->id;
                     $redirect_uri = $this->getAppValue('eduid-redirect-uri-' . $uuid);
-                    $path = $this->getAppValue('eduid-path-' . $uuid);
-                    $info = pathinfo($path);
+                    $originalPath = $this->getAppValue('eduid-path-' . $uuid);
+                    $info = pathinfo($originalPath);
+                    $directory = $info['dirname'];
                     $filenamebase = $info['filename'] . "-signed";
                     $filename = $filenamebase . "." . $info['extension'];
                     $filecontent = base64_decode((string)$document->signed_content);
                     $userFolder = $this->rootFolder->getUserFolder($uid);
+
+                    // Build full path in same directory as original file
+                    $targetPath = ($directory === '.' || $directory === '')
+                        ? $filename
+                        : $directory . '/' . $filename;
+
                     $index = 1;
-                    while ($userFolder->nodeExists($filename)) {
+                    while ($userFolder->nodeExists($targetPath)) {
                         $filename = $filenamebase . "-{$index}." . $info['extension'];
+                        $targetPath = ($directory === '.' || $directory === '')
+                            ? $filename
+                            : $directory . '/' . $filename;
                         $index++;
                     }
-                    $this->logger->debug("Creating file {$filename}");
+                    $this->logger->debug("Creating file {$targetPath}");
                     try {
-                        $filehandle = $userFolder->newFile($filename);
+                        $filehandle = $userFolder->newFile($targetPath);
                         $filehandle->putContent($filecontent);
                     } catch (NotPermittedException $e) {
                         $this->logger->error($e->getMessage());
