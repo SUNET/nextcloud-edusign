@@ -38,7 +38,7 @@
 #        "build": "node node_modules/gulp-cli/bin/gulp.js"
 #    },
 app_name=edusign
-get_version = $(shell  grep /version appinfo/info.xml | sed 's/.*\([0-9]\.[0-9]\.[0-9]\).*/\1/')
+get_version = $(shell  grep /version appinfo/info.xml | sed 's/.*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/')
 cert_dir=$(HOME)/.nextcloud/certificates
 project_dir=$(CURDIR)
 build_dir=build/artifacts
