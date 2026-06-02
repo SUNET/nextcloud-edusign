@@ -4,7 +4,10 @@ namespace OCA\Edusign\Controller;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
+use OCA\Edusign\Db\SignRequest;
+use OCA\Edusign\Db\SignRequestMapper;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Http\JSONResponse;
@@ -31,6 +34,7 @@ class ApiController extends Controller
     private IURLGenerator $urlGenerator;
     private IAppConfig $config;
     private IUserManager $userManager;
+    private SignRequestMapper $signRequestMapper;
 
     public function __construct(
         ?string $userId,
@@ -41,6 +45,7 @@ class ApiController extends Controller
         IURLGenerator $urlGenerator,
         IAppConfig $config,
         IUserManager $userManager,
+        SignRequestMapper $signRequestMapper,
     ) {
         parent::__construct($appName, $request);
         $this->appName = $appName;
@@ -51,6 +56,7 @@ class ApiController extends Controller
         $this->urlGenerator = $urlGenerator;
         $this->userId = $userId;
         $this->userManager = $userManager;
+        $this->signRequestMapper = $signRequestMapper;
     }
 
     private function generate_uuid()
@@ -202,8 +208,13 @@ class ApiController extends Controller
 
         $edusign_endpoint = $this->getAppValue('edusign_endpoint') . "/create-sign-request";
         $uuid = $this->generate_uuid();
-        $this->setAppValue('eduid-path-' . $uuid, $path);
-        $this->setAppValue('eduid-redirect-uri-' . $uuid, $redirect_uri);
+        $signRequest = new SignRequest();
+        $signRequest->setUuid($uuid);
+        $signRequest->setPath($path);
+        $signRequest->setRedirectUri($redirect_uri);
+        $signRequest->setUid($this->userId);
+        $signRequest->setCreatedAt(time());
+        $signRequest = $this->signRequestMapper->insert($signRequest);
         $b64pdf = base64_encode($contents);
 
         $signreq = array(
@@ -231,6 +242,9 @@ class ApiController extends Controller
                 ['json' => $signreq]
             );
         } catch (RequestException $e) {
+            // The sign service call failed, so this request will never be
+            // completed. Drop the row instead of leaking it.
+            $this->signRequestMapper->delete($signRequest);
             $this->logger->error($e->getMessage());
             $error_response["message"] = "RequestException";
             return new JSONResponse(json_encode($error_response));
@@ -244,13 +258,16 @@ class ApiController extends Controller
             $array_body = json_decode($string_body);
             if (!$array_body->error) {
                 $payload = $array_body->payload;
-                $this->setAppValue('eduid-uid-' . $payload->relay_state, $this->userId);
+                $signRequest->setRelayState($payload->relay_state);
+                $this->signRequestMapper->update($signRequest);
             } else {
+                $this->signRequestMapper->delete($signRequest);
                 $this->logger->error($array_body->message);
                 $error_response["message"] = $array_body->message;
                 return new JSONResponse($error_response);
             }
         } else {
+            $this->signRequestMapper->delete($signRequest);
             $this->logger->error("No response body");
             $error_response["message"] = "No response body";
             return new JSONResponse($error_response);
@@ -271,7 +288,13 @@ class ApiController extends Controller
         $sign_response = $params['EidSignResponse'];
         $redirect_uri = $this->urlGenerator->getBaseUrl();
         $return_url = $this->urlGenerator->getAbsoluteURL("/index.php/apps/edusign/response");
-        $uid = $this->getAppValue('eduid-uid-' . $relay_state);
+        try {
+            $signRequest = $this->signRequestMapper->findByRelayState($relay_state);
+        } catch (DoesNotExistException) {
+            $this->logger->error('No signing request found for relay state ' . $relay_state);
+            return new RedirectResponse($redirect_uri, Http::STATUS_OK);
+        }
+        $uid = $signRequest->getUid();
         $personal_data = $this->getPersonalData($uid, $return_url);
         unset($personal_data["authn_context"]);
         unset($personal_data["idp"]);
@@ -297,9 +320,8 @@ class ApiController extends Controller
                     $payload = $array_body->payload;
                     // We only have one document in the response, so we can get it directly
                     $document = $payload->documents[0];
-                    $uuid = $document->id;
-                    $redirect_uri = $this->getAppValue('eduid-redirect-uri-' . $uuid);
-                    $originalPath = $this->getAppValue('eduid-path-' . $uuid);
+                    $redirect_uri = $signRequest->getRedirectUri();
+                    $originalPath = $signRequest->getPath();
                     $info = pathinfo($originalPath);
                     $directory = $info['dirname'];
                     $filenamebase = $info['filename'] . "-signed";
@@ -328,9 +350,7 @@ class ApiController extends Controller
                         $this->logger->error($e->getMessage());
                     }
 
-                    $this->deleteAppValue('eduid-redirect-uri-' . $uuid);
-                    $this->deleteAppValue('eduid-path-' . $uuid);
-                    $this->deleteAppValue('eduid-uid-' . $relay_state);
+                    $this->signRequestMapper->delete($signRequest);
                 }
             } else {
                 $this->logger->error("Error: {$response->getStatusCode()}");
