@@ -102,7 +102,6 @@ class ApiController extends Controller
      *
      * @return DataResponse
      **/
-    #[NoCSRFRequired]
     #[NoAdminRequired]
     public function query(): DataResponse
     {
@@ -122,7 +121,6 @@ class ApiController extends Controller
      *
      * @return DataResponse
      **/
-    #[NoCSRFRequired]
     public function register(): DataResponse
     {
         $params = $this->request->getParams();
@@ -150,7 +148,6 @@ class ApiController extends Controller
      *
      * @return DataResponse
      **/
-    #[NoCSRFRequired]
     public function remove(): DataResponse
     {
         $this->deleteAppValue("idp");
@@ -161,13 +158,12 @@ class ApiController extends Controller
         $this->deleteAppValue("registration_authority");
         $this->deleteAppValue("saml_attr_schema");
         $this->deleteAppValue("csp_domains");
-        $response = array("success" => "success");
+        $response = array("status" => "success");
         return new DataResponse($response);
     }
     /**
      * @return JSONResponse
      **/
-    #[NoCSRFRequired]
     #[NoAdminRequired]
     public function request(): JSONResponse
     {
@@ -178,7 +174,7 @@ class ApiController extends Controller
         $error_response = array("error" => true);
         if (!$this->userId) {
             $error_response["message"] = "No user logged in";
-            return new JSONResponse(json_encode($error_response));
+            return new JSONResponse($error_response);
         }
         $userFolder = $this->rootFolder->getUserFolder($this->userId);
         $contents = "";
@@ -198,12 +194,12 @@ class ApiController extends Controller
             } else {
                 $this->logger->error('Can not read file');
                 $error_response["message"] = "Could not read file";
-                return new JSONResponse(json_encode($error_response));
+                return new JSONResponse($error_response);
             }
         } catch (NotFoundException) {
             $this->logger->error('File does not exist');
             $error_response["message"] = "File does not exist";
-            return new JSONResponse(json_encode($error_response));
+            return new JSONResponse($error_response);
         }
 
         $edusign_endpoint = $this->getAppValue('edusign_endpoint') . "/create-sign-request";
@@ -247,7 +243,7 @@ class ApiController extends Controller
             $this->signRequestMapper->delete($signRequest);
             $this->logger->error($e->getMessage());
             $error_response["message"] = "RequestException";
-            return new JSONResponse(json_encode($error_response));
+            return new JSONResponse($error_response);
         }
 
         $body = $response->getBody();
@@ -295,6 +291,10 @@ class ApiController extends Controller
             return new RedirectResponse($redirect_uri, Http::STATUS_OK);
         }
         $uid = $signRequest->getUid();
+        if ($uid === null || $this->userManager->get($uid) === null) {
+            $this->logger->error('Signing request for relay state ' . $relay_state . ' has no valid user');
+            return new RedirectResponse($redirect_uri, Http::STATUS_OK);
+        }
         $personal_data = $this->getPersonalData($uid, $return_url);
         unset($personal_data["authn_context"]);
         unset($personal_data["idp"]);

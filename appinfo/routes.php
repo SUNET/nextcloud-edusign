@@ -17,8 +17,8 @@ return [
   'routes' => [
     ['name' => 'api#query', 'url' => '/query', 'verb' => 'GET'],
     ['name' => 'api#register', 'url' => '/register', 'verb' => 'POST'],
-    ['name' => 'api#remove', 'url' => '/remove', 'verb' => 'GET'],
-    ['name' => 'api#request', 'url' => '/request', 'verb' => 'GET'],
+    ['name' => 'api#remove', 'url' => '/remove', 'verb' => 'POST'],
+    ['name' => 'api#request', 'url' => '/request', 'verb' => 'POST'],
     ['name' => 'api#response', 'url' => '/response', 'verb' => 'POST'],
   ]
 ];
