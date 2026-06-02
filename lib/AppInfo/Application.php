@@ -16,18 +16,16 @@ use OCP\Util;
 
 class Application extends App implements IBootstrap
 {
-  public const APP_ID = 'edusign';
+    public const APP_ID = 'edusign';
 
-  public function __construct()
-  {
-    parent::__construct(self::APP_ID);
-  }
-  public function register(IRegistrationContext $context): void
-  {
-    $context->registerEventListener(AddContentSecurityPolicyEvent::class, CSPListener::class);
-    Util::addScript(Application::APP_ID, 'edusign-main');
-  }
-  public function boot(IBootContext $context): void
-  {
-  }
+    public function __construct()
+    {
+        parent::__construct(self::APP_ID);
+    }
+    public function register(IRegistrationContext $context): void
+    {
+        $context->registerEventListener(AddContentSecurityPolicyEvent::class, CSPListener::class);
+        Util::addScript(Application::APP_ID, 'edusign-main');
+    }
+    public function boot(IBootContext $context): void {}
 }

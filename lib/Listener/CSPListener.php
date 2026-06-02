@@ -20,8 +20,7 @@ class CSPListener implements IEventListener
     public function __construct(
         private IAppConfig $appConfig,
         private LoggerInterface $logger
-    ) {
-    }
+    ) {}
 
     public function handle(Event $event): void
     {

@@ -130,7 +130,6 @@ import {
 // Icons
 import Check from 'vue-material-design-icons/Check.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
-import Pencil from 'vue-material-design-icons/Pencil.vue'
 
 export default {
   name: 'AdminSettings',
@@ -144,7 +143,6 @@ export default {
     NcListItemIcon,
     NcSettingsSection,
     NcTextField,
-    Pencil,
   },
 
   props: [],
@@ -192,7 +190,7 @@ export default {
 
     async remove() {
       const url = generateUrl('/apps/edusign/remove')
-      const res = await axios.get(url)
+      const res = await axios.post(url)
       console.log(res)
       if (res.data.status === 'success') {
         this.idp = ''
@@ -219,7 +217,7 @@ export default {
         csp_domains: this.csp_domains,
       }
       const res = await axios.post(url, payload)
-      if (res.data.status != 'success') {
+      if (res.data.status !== 'success') {
         console.log(res)
       }
     },
