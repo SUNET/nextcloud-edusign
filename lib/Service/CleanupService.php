@@ -35,8 +35,7 @@ class CleanupService
         private SignRequestMapper $mapper,
         private IAppConfig $appConfig,
         private ITimeFactory $timeFactory,
-    ) {
-    }
+    ) {}
 
     /** Interval in seconds between automatic cleanup runs. */
     public function getInterval(): int

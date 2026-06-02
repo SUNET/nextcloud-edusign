@@ -29,8 +29,7 @@ class Version000011Date20260601000000 extends SimpleMigrationStep
         private IDBConnection $db,
         private IAppConfig $appConfig,
         private IJobList $jobList,
-    ) {
-    }
+    ) {}
 
     /**
      * @param Closure(): ISchemaWrapper $schemaClosure
