@@ -8,7 +8,6 @@ use OCA\Edusign\Db\SignRequest;
 use OCA\Edusign\Db\SignRequestMapper;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\RedirectResponse;
@@ -288,12 +287,12 @@ class ApiController extends Controller
             $signRequest = $this->signRequestMapper->findByRelayState($relay_state);
         } catch (DoesNotExistException) {
             $this->logger->error('No signing request found for relay state ' . $relay_state);
-            return new RedirectResponse($redirect_uri, Http::STATUS_OK);
+            return new RedirectResponse($redirect_uri);
         }
         $uid = $signRequest->getUid();
         if ($uid === null || $this->userManager->get($uid) === null) {
             $this->logger->error('Signing request for relay state ' . $relay_state . ' has no valid user');
-            return new RedirectResponse($redirect_uri, Http::STATUS_OK);
+            return new RedirectResponse($redirect_uri);
         }
         $personal_data = $this->getPersonalData($uid, $return_url);
         unset($personal_data["authn_context"]);
@@ -322,6 +321,17 @@ class ApiController extends Controller
                     $document = $payload->documents[0];
                     $redirect_uri = $signRequest->getRedirectUri();
                     $originalPath = $signRequest->getPath();
+                    if ($originalPath === null || $redirect_uri === null) {
+                        // Best-effort migrated rows (eduid-uid-* only) lack path/
+                        // redirect_uri; there is nothing to write back, so drop the
+                        // stale row instead of fatalling on pathinfo(null).
+                        $this->logger->error(
+                            'Signing request for relay state ' . $relay_state
+                            . ' is missing its path/redirect_uri; removing stale row'
+                        );
+                        $this->signRequestMapper->delete($signRequest);
+                        return new RedirectResponse($this->urlGenerator->getBaseUrl());
+                    }
                     $info = pathinfo($originalPath);
                     $directory = $info['dirname'];
                     $filenamebase = $info['filename'] . "-signed";
@@ -358,6 +368,6 @@ class ApiController extends Controller
         } catch (RequestException $e) {
             $this->logger->error($e->getMessage());
         }
-        return new RedirectResponse($redirect_uri, Http::STATUS_OK);
+        return new RedirectResponse($redirect_uri);
     }
 }

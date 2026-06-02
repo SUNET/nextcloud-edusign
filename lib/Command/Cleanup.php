@@ -17,7 +17,8 @@ use Symfony\Component\Console\Output\OutputInterface;
  *
  * Removes incomplete/abandoned signing requests. By default it uses the same
  * age threshold as the nightly background job; pass --days to override it (for
- * example --days=0 to remove every incomplete request right now).
+ * example --days=0 to remove every request not created within the current
+ * second, i.e. effectively everything still pending).
  */
 class Cleanup extends Command
 {
