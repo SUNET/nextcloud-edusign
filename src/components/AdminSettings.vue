@@ -4,79 +4,79 @@
 			<NcSettingsSection
 				name="eduSign"
 				description="eduSign signature engine."
-				doc-url="https://github.com/SUNET/nextcloud-edusign"
+				docUrl="https://github.com/SUNET/nextcloud-edusign"
 				@default="populate">
 				<div class="external-label">
 					<label for="EdusignEndpoint">eduSign Endpoint</label>
 					<NcTextField
 						id="EdusignEndpoint"
 						v-model="edusign_endpoint"
-						:label-outside="true"
+						:labelOutside="true"
 						placeholder="eduSign Endpoint"
-						@update:model-value="check" />
+						@update:modelValue="check" />
 				</div>
 				<div class="external-label">
 					<label for="IdP">IdP</label>
 					<NcTextField
 						id="IdP"
 						v-model="idp"
-						:label-outside="true"
+						:labelOutside="true"
 						placeholder="IdP (entity id)"
-						@update:model-value="check" />
+						@update:modelValue="check" />
 				</div>
 				<div class="external-label">
 					<label for="AuthnContext">Authn Context</label>
 					<NcTextField
 						id="AuthnContext"
 						v-model="authn_context"
-						:label-outside="true"
+						:labelOutside="true"
 						placeholder="Authn Context"
-						@update:model-value="check" />
+						@update:modelValue="check" />
 				</div>
 				<div class="external-label">
 					<label for="Organization">Organization</label>
 					<NcTextField
 						id="Organization"
 						v-model="organization"
-						:label-outside="true"
+						:labelOutside="true"
 						placeholder="Organization"
-						@update:model-value="check" />
+						@update:modelValue="check" />
 				</div>
 				<div class="external-label">
 					<label for="Assurance">Assurance</label>
 					<NcTextField
 						id="Assurance"
 						v-model="assurance"
-						:label-outside="true"
+						:labelOutside="true"
 						placeholder="Assurance"
-						@update:model-value="check" />
+						@update:modelValue="check" />
 				</div>
 				<div class="external-label">
 					<label for="RegistrationAuthority">Registration Authority</label>
 					<NcTextField
 						id="RegistrationAuthority"
 						v-model="registration_authority"
-						:label-outside="true"
+						:labelOutside="true"
 						placeholder="Registration Authority"
-						@update:model-value="check" />
+						@update:modelValue="check" />
 				</div>
 				<div class="external-label">
 					<label for="SamlAttrSchema">Saml Attribute Schema</label>
 					<NcTextField
 						id="SamlAttrSchema"
 						v-model="saml_attr_schema"
-						:label-outside="true"
+						:labelOutside="true"
 						placeholder="Saml Attribute Schema"
-						@update:model-value="check" />
+						@update:modelValue="check" />
 				</div>
 				<div class="external-label">
 					<label for="CSPDomains">Additional CSP Domains</label>
 					<NcTextField
 						id="CSPDomains"
 						v-model="csp_domains"
-						:label-outside="true"
+						:labelOutside="true"
 						placeholder="Space separated list of domains"
-						@update:model-value="check" />
+						@update:modelValue="check" />
 				</div>
 				<NcButton
 					id="Button"
@@ -119,14 +119,12 @@
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 // Nextcloud components
-import {
-  NcActionButton,
-  NcActions,
-  NcButton,
-  NcListItemIcon,
-  NcSettingsSection,
-  NcTextField,
-} from '@nextcloud/vue'
+import NcActionButton from '@nextcloud/vue/components/NcActionButton'
+import NcActions from '@nextcloud/vue/components/NcActions'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcListItemIcon from '@nextcloud/vue/components/NcListItemIcon'
+import NcSettingsSection from '@nextcloud/vue/components/NcSettingsSection'
+import NcTextField from '@nextcloud/vue/components/NcTextField'
 // Icons
 import Check from 'vue-material-design-icons/Check.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'

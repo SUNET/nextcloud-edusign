@@ -11,7 +11,7 @@
   <description>
     <![CDATA[Edusign integration for Nextcloud]]>
   </description>
-  <version>0.0.11</version>
+  <version>0.0.12</version>
   <licence>agpl</licence>
   <author mail="kano@sunet.se" homepage="https://github.com/SUNET/nextcloud-edusign">Mikael
     Nordin</author>
@@ -19,7 +19,7 @@
   <category>integration</category>
   <bugs>https://github.com/SUNET/nextcloud-edusign/issues</bugs>
   <dependencies>
-    <nextcloud min-version="32" max-version="33" />
+    <nextcloud min-version="33" max-version="35" />
   </dependencies>
   <settings>
     <admin>OCA\Edusign\Settings\AdminSettings</admin>

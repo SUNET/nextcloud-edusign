@@ -39,11 +39,11 @@
 #    },
 app_name=edusign
 get_version = $(shell  grep /version appinfo/info.xml | sed 's/.*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/')
-cert_dir=$(HOME)/.nextcloud/certificates
+cert_dir ?= $(HOME)/.nextcloud/certificates
+sign_image ?= nextcloud:35.0.1-apache
 project_dir=$(CURDIR)
 build_dir=build/artifacts
 build_tools_dir=build/tools
-sign_dir=$(build_dir)/sign
 version := $(call get_version)
 composer = $(shell which composer)
 
@@ -78,46 +78,25 @@ docker: selfsignedcert docker_kill package
 
 	firefox -new-tab https://127.0.0.1:8443/
 
-sign: package docker_kill
-	docker run --rm --volume $(cert_dir):/certificates --detach --name nextcloud nextcloud:latest
-	sleep 5
-	docker exec -u www-data nextcloud /bin/bash -c "mkdir -p /var/www/html/custom_apps"
-	docker cp $(build_dir)/$(app_name)-$(version).tar.gz nextcloud:/var/www/html/custom_apps
-	docker exec -u www-data nextcloud /bin/bash -c "cd /var/www/html/custom_apps && tar -xzf $(app_name)-$(version).tar.gz && rm $(app_name)-$(version).tar.gz"
-	docker exec -u www-data nextcloud /bin/bash -c "php /var/www/html/occ integrity:sign-app --certificate /certificates/$(app_name).crt --privateKey /certificates/$(app_name).key --path /var/www/html/custom_apps/$(app_name)"
-	docker exec -u www-data nextcloud /bin/bash -c "cd /var/www/html/custom_apps && tar pzcf $(app_name)-$(version).tar.gz $(app_name)"
-	docker cp nextcloud:/var/www/html/custom_apps/$(app_name)-$(version).tar.gz $(build_dir)/$(app_name)-$(version).tar.gz
-	sleep 3
-	docker kill nextcloud
-	openssl dgst -sha512 -sign ~/.nextcloud/certificates/$(app_name).key $(build_dir)/$(app_name)-$(version).tar.gz | openssl base64
+.PHONY: sign appstore
+sign: package
+	bash "$(project_dir)/scripts/sign-release.sh" "$(build_dir)/$(app_name)-$(version).tar.gz" "$(app_name)" "$(cert_dir)" "$(sign_image)"
 
 appstore: sign
 
 clean:
 	rm -rf $(build_dir)
 
-package: clean build
-	mkdir -p $(sign_dir)
-	rsync -a \
-	--exclude=/build \
-	--exclude=/docs \
-	--exclude=/translationfiles \
-	--exclude=.tx \
-	--exclude=/tests \
-	--exclude=.git \
-	--exclude=.github \
-	--exclude=/l10n/l10n.pl \
-	--exclude=/CONTRIBUTING.md \
-	--exclude=/issue_template.md \
-	--exclude=.gitattributes \
-	--exclude=.gitignore \
-	--exclude=.scrutinizer.yml \
-	--exclude=.travis.yml \
-	--exclude=/Makefile \
-	--exclude=.drone.yml \
-	$(project_dir)/ $(sign_dir)/$(app_name)
-	tar -czf $(build_dir)/$(app_name)-$(version).tar.gz \
-		-C $(sign_dir) $(app_name)
+.PHONY: package
+package: build
+	mkdir -p $(build_dir)
+	@set -eu; \
+	stage=$$(mktemp -d "$(project_dir)/$(build_dir)/package-$(version)-XXXXXX"); \
+	trap 'rm -rf "$$stage"' EXIT; \
+	mkdir -p "$$stage/$(app_name)"; \
+	cp -a appinfo img js lib templates LICENSE composer.json composer.lock "$$stage/$(app_name)/"; \
+	composer install --working-dir="$$stage/$(app_name)" --no-dev --prefer-dist --no-interaction --optimize-autoloader; \
+	tar -czf "$(build_dir)/$(app_name)-$(version).tar.gz" -C "$$stage" $(app_name)
 
 
 # Fetches the PHP and JS dependencies and compiles the JS. If no composer.json
@@ -152,7 +131,7 @@ endif
 # Installs npm dependencies
 .PHONY: npm
 npm:
-	cd $(project_dir) && npm install
+	cd $(project_dir) && npm ci
 	cd $(project_dir) && npm run build
 
 # Same as clean but also removes dependencies installed by composer, bower and
@@ -164,12 +143,11 @@ distclean: clean
 
 .PHONY: test
 test: composer
-	$(project_dir)/vendor/phpunit/phpunit/phpunit -c $(project_dir)/phpunit.xml
-	$(project_dir)/vendor/phpunit/phpunit/phpunit -c $(project_dir)/phpunit.integration.xml
+	npm test
 
 .PHONY: lint
 lint: composer
-	$(project_dir)/vendor/bin/php-cs-fixer fix --dry-run --diff
+	composer run cs:check
 
 .PHONY: hooks
 hooks:

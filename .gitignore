@@ -2,4 +2,5 @@ build
 js
 node_modules
 vendor
+composer
 .php-cs-fixer.cache

@@ -5,6 +5,7 @@
  * @author Micke Nordin <kano@sunet.se>
  * @copyright Micke Nordin 2025
  */
+import { n, t } from '@nextcloud/l10n'
 import { createApp } from 'vue'
 import AdminSettings from './components/AdminSettings.vue'
 
