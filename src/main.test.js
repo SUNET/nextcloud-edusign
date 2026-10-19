@@ -26,6 +26,7 @@ const configuration = {
 
 async function loadAction() {
   await import('./main.js')
+  await vi.waitFor(() => expect(registerFileAction).toHaveBeenCalledOnce())
   return registerFileAction.mock.calls[0][0]
 }
 
@@ -64,28 +65,46 @@ describe('Nextcloud 33+ signing action', () => {
     expect(action.enabled({ nodes: [{ mime: 'application/pdf' }, { mime: 'application/pdf' }] })).toBe(false)
   })
 
-  it('stays disabled until configuration is loaded', async () => {
+  it('waits to register until configuration is loaded', async () => {
     let resolve
     axios.get.mockReturnValue(new Promise((done) => {
       resolve = done
     }))
-    const action = await loadAction()
-    expect(action.enabled({ nodes: [{ mime: 'application/pdf' }] })).toBe(false)
+    await import('./main.js')
+    expect(registerFileAction).not.toHaveBeenCalled()
     resolve({ data: configuration })
-    await vi.waitFor(() => expect(OCA.Edusign.configured).toBe(true))
+    await vi.waitFor(() => expect(registerFileAction).toHaveBeenCalledOnce())
+    const action = registerFileAction.mock.calls[0][0]
+    expect(action.enabled({ nodes: [{ mime: 'application/pdf' }] })).toBe(true)
   })
 
-  it('stays disabled for incomplete configuration', async () => {
+  it('does not register for incomplete configuration', async () => {
     axios.get.mockResolvedValue({ data: { ...configuration, idp: '' } })
-    const action = await loadAction()
-    expect(action.enabled({ nodes: [{ mime: 'application/pdf' }] })).toBe(false)
+    await import('./main.js')
+    await vi.waitFor(() => expect(OCA.Edusign.configured).toBe(false))
+    expect(registerFileAction).not.toHaveBeenCalled()
   })
 
-  it('stays disabled when loading configuration fails', async () => {
+  it('does not register when loading configuration fails', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
     axios.get.mockRejectedValue(new Error('Unavailable'))
-    const action = await loadAction()
-    expect(action.enabled({ nodes: [{ mime: 'application/pdf' }] })).toBe(false)
+    await import('./main.js')
+    await vi.waitFor(() => expect(console.error).toHaveBeenCalledOnce())
+    expect(registerFileAction).not.toHaveBeenCalled()
+  })
+
+  it('does not treat an HTML login response as configuration', async () => {
+    axios.get.mockResolvedValue({ data: '<!doctype html><title>Login</title>' })
+    await import('./main.js')
+    await vi.waitFor(() => expect(OCA.Edusign.configured).toBe(false))
+    expect(registerFileAction).not.toHaveBeenCalled()
+  })
+
+  it('does not register when assurance has no value', async () => {
+    axios.get.mockResolvedValue({ data: { ...configuration, assurance: [''] } })
+    await import('./main.js')
+    await vi.waitFor(() => expect(OCA.Edusign.configured).toBe(false))
+    expect(registerFileAction).not.toHaveBeenCalled()
   })
 
   it('uses the selected node from the new execution context and submits the signing form', async () => {

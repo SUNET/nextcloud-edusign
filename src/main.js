@@ -17,24 +17,7 @@ if (!OCA.Edusign) {
     configured: false,
     requestOnFileChange: false,
     mimetype: ['application/pdf', 'application/xml'],
-  };
-  (async () => {
-    try {
-      const { data } = await axios.get(generateUrl('/apps/edusign/query'))
-      OCA.Edusign.configured = (
-        data.assurance !== ''
-        && data.authn_context !== ''
-        && data.edusign_endpoint !== ''
-        && data.idp !== ''
-        && data.organization !== ''
-        && data.registration_authority !== ''
-        && data.saml_attr_schema !== ''
-      )
-    } catch (e) {
-      OCA.Edusign.configured = false
-      console.error('Edusign: failed to load configuration', e)
-    }
-  })()
+  }
 }
 
 const requestSignatureAction = {
@@ -47,8 +30,7 @@ const requestSignatureAction = {
   },
   enabled({ nodes }) {
     return (
-      OCA.Edusign.configured
-      && nodes.length === 1
+      nodes.length === 1
       && nodes.some((node) => OCA.Edusign.mimetype.includes(node.mime))
     )
   },
@@ -88,4 +70,39 @@ const requestSignatureAction = {
     return null
   },
 }
-registerFileAction(requestSignatureAction)
+
+const requiredConfiguration = [
+  'assurance',
+  'authn_context',
+  'edusign_endpoint',
+  'idp',
+  'organization',
+  'registration_authority',
+  'saml_attr_schema',
+]
+
+function hasConfigurationValue(value) {
+  if (Array.isArray(value)) {
+    return value.some((entry) => typeof entry === 'string' && entry.trim() !== '')
+  }
+  return typeof value === 'string' && value.trim() !== ''
+}
+
+async function registerConfiguredAction() {
+  try {
+    const { data } = await axios.get(generateUrl('/apps/edusign/query'))
+    OCA.Edusign.configured = (
+      typeof data === 'object'
+      && data !== null
+      && requiredConfiguration.every((key) => hasConfigurationValue(data[key]))
+    )
+    if (OCA.Edusign.configured) {
+      registerFileAction(requestSignatureAction)
+    }
+  } catch (error) {
+    OCA.Edusign.configured = false
+    console.error('Edusign: failed to load configuration', error)
+  }
+}
+
+void registerConfiguredAction()

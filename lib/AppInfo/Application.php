@@ -7,12 +7,13 @@ declare(strict_types=1);
 namespace OCA\Edusign\AppInfo;
 
 use OCA\Edusign\Listener\CSPListener;
+use OCA\Edusign\Listener\LoadAdditionalScriptsListener;
+use OCA\Files\Event\LoadAdditionalScriptsEvent;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCP\Security\CSP\AddContentSecurityPolicyEvent;
-use OCP\Util;
 
 class Application extends App implements IBootstrap
 {
@@ -25,7 +26,7 @@ class Application extends App implements IBootstrap
     public function register(IRegistrationContext $context): void
     {
         $context->registerEventListener(AddContentSecurityPolicyEvent::class, CSPListener::class);
-        Util::addScript(Application::APP_ID, 'edusign-main');
+        $context->registerEventListener(LoadAdditionalScriptsEvent::class, LoadAdditionalScriptsListener::class);
     }
     public function boot(IBootContext $context): void {}
 }
