@@ -39,7 +39,7 @@ function expectUnchangedArchive(result) {
   expect(result.status).not.toBe(0)
   expect(result.stdout).not.toContain('App Store archive signature:')
   expect(readFileSync(archive)).toEqual(originalArchive)
-  expect(readdirSync(dirname(archive))).toEqual(['edusign-0.0.12.tar.gz'])
+  expect(readdirSync(dirname(archive))).toEqual(['edusign-0.0.13.tar.gz'])
 }
 
 describe('release signing', () => {
@@ -50,7 +50,7 @@ describe('release signing', () => {
     const archiveDir = join(root, 'release artifacts')
     certificateDir = join(root, 'private certificates')
     dockerLog = join(root, 'docker.json')
-    archive = join(archiveDir, 'edusign-0.0.12.tar.gz')
+    archive = join(archiveDir, 'edusign-0.0.13.tar.gz')
     for (const directory of [binaryDir, appDir, archiveDir, certificateDir]) {
       mkdirSync(directory, { recursive: true })
     }
@@ -113,7 +113,7 @@ fs.writeFileSync(path.join(appDir, 'appinfo', 'signature.json'), JSON.stringify(
     expect(JSON.parse(appSignature.stdout)).toEqual({ signed: true })
     expect(statSync(join(certificateDir, 'edusign.key')).mode & 0o777).toBe(0o600)
     expect(readFileSync(join(certificateDir, 'edusign.key'), 'utf8')).toBe(privateKey)
-    expect(readdirSync(dirname(archive))).toEqual(['edusign-0.0.12.tar.gz'])
+    expect(readdirSync(dirname(archive))).toEqual(['edusign-0.0.13.tar.gz'])
   })
 
   it('preserves the input archive and cleans staging when Docker fails', () => {
@@ -154,7 +154,7 @@ fs.writeFileSync(path.join(appDir, 'appinfo', 'signature.json'), JSON.stringify(
       '-o',
       'package',
       'appstore',
-      'version=0.0.12',
+      'version=0.0.13',
       `build_dir=${dirname(archive)}`,
       `cert_dir=${certificateDir}`,
       `sign_image=${image}`,

@@ -1,4 +1,4 @@
-# Release 0.0.12
+# Release 0.0.13
 
 ## Compatibility and dependency choices
 
@@ -26,7 +26,7 @@ the audits before signing to check for upstream fixes.
 
 ## Verification before signing
 
-A clean install, lint checks, nine frontend tests, and packaging were verified
+A clean install, lint checks, 18 frontend tests, and packaging were verified
 with Node.js 24.21.0 and npm 12.2.0. The approved Webpack compatibility check ran,
 no unreviewed install scripts remained, and Parcel's prebuilt watcher loaded with
 source compilation denied.
@@ -52,7 +52,7 @@ Install the archive on disposable Nextcloud 33 and 35 instances and verify:
 
 Local preparation verified enablement, migration, service construction,
 configuration reads, signing-request DB operations, and cleanup on Nextcloud
-33.0.0 and 35.0.1 with PHP 8.4 and SQLite. Nine frontend regression tests cover
+33.0.0 and 35.0.1 with PHP 8.4 and SQLite. Frontend regression tests cover
 registration, eligibility, configuration failure/loading, and signing-form
 submission. Browser checks and a live eduSign round trip remain to be completed
 on a configured instance. Webpack still emits size warnings for the settings
@@ -93,7 +93,7 @@ Nextcloud 33 and 35 trees: all 216 file hashes and both app signatures were
 verified cryptographically. An actual image run and signing with the release
 certificate must be verified on the host.
 
-Commit the prepared files, tag the reviewed commit as `v0.0.12`, publish the
+Commit the prepared files, tag the reviewed commit as `v0.0.13`, publish the
 signed archive with the changelog, and submit the release to the Nextcloud App
 Store. Do not publish the unsigned preparation archive. No commit, tag,
 signing, upload, or publication is performed during local preparation.

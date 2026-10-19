@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.13
+
+- Fix the signing file action not appearing when configuration loads after the Files app evaluates available actions.
+- Load the signing bundle only in the Files app instead of on login and other unrelated pages.
+- Reject incomplete configuration and unexpected login-page responses before registering the action.
+
 ## 0.0.12
 
 - Support Nextcloud 33–35; Nextcloud 32 users should stay on 0.0.11.
