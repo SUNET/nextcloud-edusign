@@ -22,6 +22,7 @@ const configuration = {
   organization: 'Example',
   registration_authority: 'https://example.org/',
   saml_attr_schema: '20',
+  api_key_configured: true,
 }
 
 async function loadAction() {

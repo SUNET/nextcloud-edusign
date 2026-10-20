@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.14
+
+- Add secure API-key configuration and use it for eduSign API calls.
+
 ## 0.0.13
 
 - Fix the signing file action not appearing when configuration loads after the Files app evaluates available actions.

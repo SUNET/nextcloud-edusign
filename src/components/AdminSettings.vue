@@ -16,6 +16,16 @@
 						@update:modelValue="check" />
 				</div>
 				<div class="external-label">
+					<label for="ApiKey">API Key</label>
+					<NcTextField
+						id="ApiKey"
+						v-model="api_key"
+						:labelOutside="true"
+						:placeholder="api_key_configured ? 'Leave blank to keep existing API key' : 'eduSign API Key'"
+						type="password"
+						@update:modelValue="check" />
+				</div>
+				<div class="external-label">
 					<label for="IdP">IdP</label>
 					<NcTextField
 						id="IdP"
@@ -149,6 +159,8 @@ export default {
       idp: '',
       authn_context: '',
       edusign_endpoint: '',
+      api_key: '',
+      api_key_configured: false,
       organization: '',
       assurance: '',
       registration_authority: '',
@@ -164,6 +176,7 @@ export default {
       this.idp = result.data.idp || ''
       this.authn_context = result.data.authn_context || ''
       this.edusign_endpoint = result.data.edusign_endpoint || ''
+      this.api_key_configured = result.data.api_key_configured === true
       this.organization = result.data.organization || ''
       this.assurance = result.data.assurance[0] || ''
       this.registration_authority = result.data.registration_authority || ''
@@ -179,6 +192,7 @@ export default {
         this.idp !== ''
         && this.authn_context !== ''
         && this.edusign_endpoint !== ''
+        && (this.api_key.trim() !== '' || this.api_key_configured)
         && this.organization !== ''
         && this.assurance !== ''
         && this.registration_authority !== ''
@@ -194,6 +208,8 @@ export default {
         this.idp = ''
         this.authn_context = ''
         this.edusign_endpoint = ''
+        this.api_key = ''
+        this.api_key_configured = false
         this.organization = ''
         this.assurance = ''
         this.registration_authority = ''
@@ -208,6 +224,7 @@ export default {
         idp: this.idp,
         authn_context: this.authn_context,
         edusign_endpoint: this.edusign_endpoint,
+        api_key: this.api_key,
         organization: this.organization,
         assurance: this.assurance,
         registration_authority: this.registration_authority,
@@ -217,7 +234,11 @@ export default {
       const res = await axios.post(url, payload)
       if (res.data.status !== 'success') {
         console.log(res)
+        return
       }
+      this.api_key_configured = true
+      this.api_key = ''
+      this.check()
     },
   },
 }

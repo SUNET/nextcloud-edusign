@@ -74,9 +74,9 @@ class ApiController extends Controller
         return $this->config->getValueString($this->appName, $key);
     }
 
-    private function setAppValue(string $key, string $value): void
+    private function setAppValue(string $key, string $value, bool $sensitive = false): void
     {
-        $this->config->setValueString($this->appName, $key, $value);
+        $this->config->setValueString($this->appName, $key, $value, sensitive: $sensitive);
     }
 
     private function getPersonalData(string $uid, string $return_url): array
@@ -87,6 +87,7 @@ class ApiController extends Controller
         $personal_data = (array) $this->query()->getData();
         unset($personal_data["edusign_endpoint"]);
         unset($personal_data["csp_domains"]);
+        unset($personal_data["api_key_configured"]);
         $personal_data["display_name"] = $display_name;
         $personal_data["mail"] = array($mail);
         $personal_data["return_url"] = $return_url;
@@ -113,6 +114,7 @@ class ApiController extends Controller
           "registration_authority" => $this->getAppValue("registration_authority"),
           "saml_attr_schema" => $this->getAppValue("saml_attr_schema"),
           "csp_domains" => $this->getAppValue("csp_domains"),
+          "api_key_configured" => $this->getAppValue("api_key") !== '',
         );
         return new DataResponse($response);
     }
@@ -131,6 +133,7 @@ class ApiController extends Controller
         $registration_authority = $params['registration_authority'];
         $saml_attr_schema = $params['saml_attr_schema'];
         $csp_domains = $params['csp_domains'];
+        $api_key = strval($params['api_key'] ?? '');
         $this->setAppValue("assurance", $assurance);
         $this->setAppValue("authn_context", $authn_context);
         $this->setAppValue("edusign_endpoint", $edusign_endpoint);
@@ -139,6 +142,9 @@ class ApiController extends Controller
         $this->setAppValue("registration_authority", $registration_authority);
         $this->setAppValue("saml_attr_schema", $saml_attr_schema);
         $this->setAppValue("csp_domains", $csp_domains);
+        if (trim($api_key) !== '') {
+            $this->setAppValue("api_key", $api_key, true);
+        }
 
         $response = array("status" => "success");
         return new DataResponse($response);
@@ -157,6 +163,7 @@ class ApiController extends Controller
         $this->deleteAppValue("registration_authority");
         $this->deleteAppValue("saml_attr_schema");
         $this->deleteAppValue("csp_domains");
+        $this->deleteAppValue("api_key");
         $response = array("status" => "success");
         return new DataResponse($response);
     }
@@ -213,7 +220,7 @@ class ApiController extends Controller
         $b64pdf = base64_encode($contents);
 
         $signreq = array(
-          "api_key" => "dummy",
+          "api_key" => $this->getAppValue("api_key"),
           "personal_data" => $this->getPersonalData($this->userId, $return_url),
           "payload" => array(
             "documents" => array(
@@ -299,7 +306,7 @@ class ApiController extends Controller
         unset($personal_data["idp"]);
         unset($personal_data["return_url"]);
         $docreq = array(
-          "api_key" => "dummy",
+          "api_key" => $this->getAppValue("api_key"),
           "personal_data" => $personal_data,
           "payload" => array(
             "sign_response" => $sign_response,

@@ -2,7 +2,7 @@
 
 ## Compatibility
 
-Version 0.0.13 supports Nextcloud 33–35. For Nextcloud 32, use 0.0.11.
+Version 0.0.14 supports Nextcloud 33–35. For Nextcloud 32, use 0.0.11.
 
 ## Development and release
 
@@ -37,7 +37,7 @@ npm audit --omit=dev
 make package
 ```
 
-`make package` creates `build/artifacts/edusign-0.0.13.tar.gz` using the lockfiles.
+`make package` creates `build/artifacts/edusign-0.0.14.tar.gz` using the lockfiles.
 It includes compiled JavaScript and production PHP dependencies, not source-tree
 tooling, `node_modules`, or development PHP dependencies. Existing archives are
 preserved. The archive is unsigned; signing and publishing are separate steps.

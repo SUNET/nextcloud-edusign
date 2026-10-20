@@ -95,6 +95,7 @@ async function registerConfiguredAction() {
       typeof data === 'object'
       && data !== null
       && requiredConfiguration.every((key) => hasConfigurationValue(data[key]))
+      && data.api_key_configured === true
     )
     if (OCA.Edusign.configured) {
       registerFileAction(requestSignatureAction)
