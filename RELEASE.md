@@ -1,4 +1,4 @@
-# Release 0.0.14
+# Release 0.0.15
 
 ## Compatibility and dependency choices
 
@@ -93,7 +93,7 @@ Nextcloud 33 and 35 trees: all 216 file hashes and both app signatures were
 verified cryptographically. An actual image run and signing with the release
 certificate must be verified on the host.
 
-Commit the prepared files, tag the reviewed commit as `v0.0.14`, publish the
+Commit the prepared files, tag the reviewed commit as `v0.0.15`, publish the
 signed archive with the changelog, and submit the release to the Nextcloud App
 Store. Do not publish the unsigned preparation archive. No commit, tag,
 signing, upload, or publication is performed during local preparation.

@@ -235,7 +235,8 @@ class ApiController extends Controller
                   "blob" => "data:" . $mimetype . ";base64," . $b64pdf
                 )
               )
-            )
+            ),
+            "invite_key" => ""
           )
         );
         try {

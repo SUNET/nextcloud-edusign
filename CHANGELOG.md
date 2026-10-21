@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.15
+
+- Add the required empty invitation key for compatibility with the eduSign 1.5.2 API.
+
 ## 0.0.14
 
 - Add secure API-key configuration and use it for eduSign API calls.
